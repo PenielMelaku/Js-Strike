@@ -10,37 +10,47 @@ Usage:
 import argparse
 import sys
 import threading
+import time
 
 from .fetcher import run_fetcher
 from .xss import run_xss_detectors
 from .secrets import run_secret_detectors
 from .endpoints import run_endpoint_detectors
 from .libraries import run_library_detectors
-from .report import print_terminal_report, print_json_report, print_banner
+from .report import (
+    print_terminal_report,
+    print_json_report,
+    print_banner,
+    print_scan_target,
+    Color,
+)
 from .models import Finding, Severity
 
 
 class _Spinner:
     """Lightweight stderr progress spinner for interactive terminals."""
 
-    FRAMES = ("|", "/", "-", "\\")
+    FRAMES = ("⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏")
 
     def __init__(self, message: str, enabled: bool = True):
         self.message = message
         self.enabled = enabled and sys.stderr.isatty()
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
+        self._start = time.monotonic()
 
     def _spin(self):
         idx = 0
         while not self._stop_event.is_set():
             frame = self.FRAMES[idx % len(self.FRAMES)]
-            sys.stderr.write(f"\r  [{frame}] {self.message}")
+            elapsed = time.monotonic() - self._start
+            sys.stderr.write(f"\r  {Color.CYAN}{frame}{Color.RESET} {self.message} {Color.DIM}({elapsed:.1f}s){Color.RESET}")
             sys.stderr.flush()
             idx += 1
             self._stop_event.wait(0.08)
 
     def __enter__(self):
+        self._start = time.monotonic()
         if self.enabled:
             self._thread = threading.Thread(target=self._spin, daemon=True)
             self._thread.start()
@@ -50,7 +60,7 @@ class _Spinner:
         if self.enabled and self._thread is not None:
             self._stop_event.set()
             self._thread.join()
-            clear_len = len(f"  [ ] {self.message}") + 2
+            clear_len = len(f"  x {self.message} (000.0s)") + 4
             sys.stderr.write("\r" + " " * clear_len + "\r")
             sys.stderr.flush()
 
@@ -155,14 +165,14 @@ def main(argv=None):
 
     if not args.json:
         print_banner()
-        print(f"  Target: {args.target}")
-        if args.include_third_party:
-            print(f"  Scope:  Including third-party scripts")
-        if args.allow_domain:
-            print(f"  Extra domains: {', '.join(args.allow_domain)}")
-        print()
+        print_scan_target(
+            args.target,
+            include_third_party=args.include_third_party,
+            allow_domain=args.allow_domain,
+        )
 
     # --- Phase 1: Fetch ---
+    t_fetch = time.monotonic()
     try:
         with _Spinner("Fetching target page and scripts...", enabled=not args.json):
             scripts, source_map_findings = run_fetcher(
@@ -172,22 +182,27 @@ def main(argv=None):
             )
     except Exception as e:
         if not args.json:
-            print(f"\n  [!] Fatal: Could not fetch target — {e}", file=sys.stderr)
+            print(f"\n  {Color.RED}[!] Fatal: Could not fetch target — {e}{Color.RESET}", file=sys.stderr)
         else:
             import json
             print(json.dumps({"error": str(e), "findings": []}))
         sys.exit(1)
 
     if not args.json:
+        fetch_elapsed = time.monotonic() - t_fetch
         inline_count = sum(1 for s in scripts if s.is_inline)
         external_count = sum(1 for s in scripts if not s.is_inline)
-        print(f"  [+] Found {len(scripts)} script(s): {external_count} external, {inline_count} inline",
-              file=sys.stderr)
+        print(
+            f"  {Color.GREEN}✔{Color.RESET} Found {Color.BOLD}{len(scripts)}{Color.RESET} script(s) "
+            f"({external_count} external, {inline_count} inline) {Color.DIM}in {fetch_elapsed:.2f}s{Color.RESET}",
+            file=sys.stderr,
+        )
 
     all_findings: list[Finding] = list(source_map_findings)
 
     # --- Phase 2: Detection ---
-    with _Spinner("Running detectors...", enabled=not args.json):
+    t_detect = time.monotonic()
+    with _Spinner("Running security detectors...", enabled=not args.json):
         if run_xss:
             all_findings.extend(run_xss_detectors(
                 scripts,
@@ -235,7 +250,12 @@ def main(argv=None):
 
     # --- Phase 4: Report ---
     if not args.json:
-        print(f"  [+] Analysis complete — {len(all_findings)} finding(s)\n", file=sys.stderr)
+        detect_elapsed = time.monotonic() - t_detect
+        print(
+            f"  {Color.GREEN}✔{Color.RESET} Analysis complete — {Color.BOLD}{len(all_findings)}{Color.RESET} finding(s) "
+            f"{Color.DIM}in {detect_elapsed:.2f}s{Color.RESET}\n",
+            file=sys.stderr,
+        )
         print_terminal_report(all_findings, verbose=args.verbose)
     else:
         print_json_report(all_findings)
