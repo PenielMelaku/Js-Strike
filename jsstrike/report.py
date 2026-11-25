@@ -280,6 +280,69 @@ def _print_footer():
     print(f"  {Color.DIM}jsstrike v{__version__}  |  {GITHUB_URL}  |  Authorized testing only{Color.RESET}\n")
 
 
+def print_usage_guide(animate: bool = True):
+    """Print an interactive, msfconsole-style animated How-To-Use guide."""
+    should_animate = animate and sys.stdout.isatty() and "NO_COLOR" not in os.environ
+
+    def _type_cmd(prompt_text: str):
+        if not should_animate:
+            print(prompt_text)
+            return
+        import re
+        sys.stdout.write("  ")
+        for token in re.split(r"(\033\[[0-9;]*m)", prompt_text.lstrip()):
+            if token.startswith("\033["):
+                sys.stdout.write(token)
+            else:
+                for ch in token:
+                    sys.stdout.write(ch)
+                    sys.stdout.flush()
+                    time.sleep(0.015)
+        sys.stdout.write("\n")
+        sys.stdout.flush()
+
+    print_banner(animate=should_animate)
+    _msf_section("How To Use JS Strike — Interactive Guide")
+
+    steps = [
+        (
+            "1. Basic Target Scan",
+            "Fetch HTML, extract in-scope <script> tags, and run all 14 detectors:",
+            "python -m jsstrike https://target.example.com",
+        ),
+        (
+            "2. Control Scope",
+            "Include third-party CDNs or whitelist extra subdomains/CDNs:",
+            "python -m jsstrike https://target.example.com --allow-domain cdn.example.com",
+        ),
+        (
+            "3. Focus on Specific Flaws",
+            "Run only XSS/client-side checks, secrets, endpoints, or libraries:",
+            "python -m jsstrike https://target.example.com --only-xss",
+        ),
+        (
+            "4. Filter & Export JSON",
+            "Show high/critical findings only or export structured JSON for pipelines:",
+            "python -m jsstrike https://target.example.com --min-severity high --json > report.json",
+        ),
+        (
+            "5. Practice Safely on Local Fixtures",
+            "Start the bundled vulnerable test server and scan it locally:",
+            "python3 serve_fixtures.py  # then: python -m jsstrike http://127.0.0.1:8777",
+        ),
+    ]
+
+    for title, desc, cmd in steps:
+        print(f"  {Color.BLUE}{Color.BOLD}[*]{Color.RESET} {Color.WHITE}{Color.BOLD}{title}{Color.RESET}")
+        print(f"      {Color.DIM}{desc}{Color.RESET}")
+        _type_cmd(f"  {Color.RED}jsstrike >{Color.RESET} {Color.CYAN}{cmd}{Color.RESET}")
+        print()
+        if should_animate:
+            time.sleep(0.18)
+
+    _print_footer()
+
+
 def print_json_report(findings: List[Finding]):
     """Print structured JSON report to stdout."""
     report = {

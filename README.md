@@ -39,9 +39,22 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
+## Demo & Interactive Guide
+
+![JS Strike Animated Usage Guide](assets/demo.gif)
+
+Run the built-in animated walkthrough right in your terminal:
+
+```bash
+python -m jsstrike --guide
+```
+
 ## Usage
 
 ```bash
+# Interactive animated how-to-use guide
+python -m jsstrike --guide
+
 # Basic scan
 python -m jsstrike http://target.com
 

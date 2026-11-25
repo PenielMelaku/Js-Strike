@@ -22,6 +22,7 @@ from .report import (
     print_json_report,
     print_banner,
     print_scan_target,
+    print_usage_guide,
     Color,
 )
 from .models import Finding, Severity
@@ -82,8 +83,10 @@ Examples:
 """,
     )
 
-    # Target
-    parser.add_argument("target", help="Target URL to analyze")
+    # Target / Guide
+    parser.add_argument("target", nargs="?", help="Target URL to analyze")
+    parser.add_argument("--guide", "-g", action="store_true",
+                        help="Show animated step-by-step usage guide")
 
     # Scope
     scope_group = parser.add_argument_group("Scope control")
@@ -147,6 +150,14 @@ Examples:
 def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
+
+    if args.guide:
+        print_usage_guide(animate=True)
+        return
+
+    if not args.target:
+        parser.print_help()
+        sys.exit(2)
 
     # Determine which modules to run
     only_mode = any([args.only_xss, args.only_secrets, args.only_endpoints, args.only_libraries])
