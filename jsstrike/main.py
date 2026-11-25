@@ -9,6 +9,7 @@ Usage:
 
 import argparse
 import sys
+import threading
 
 from .fetcher import run_fetcher
 from .xss import run_xss_detectors
@@ -17,6 +18,41 @@ from .endpoints import run_endpoint_detectors
 from .libraries import run_library_detectors
 from .report import print_terminal_report, print_json_report, print_banner
 from .models import Finding, Severity
+
+
+class _Spinner:
+    """Lightweight stderr progress spinner for interactive terminals."""
+
+    FRAMES = ("|", "/", "-", "\\")
+
+    def __init__(self, message: str, enabled: bool = True):
+        self.message = message
+        self.enabled = enabled and sys.stderr.isatty()
+        self._stop_event = threading.Event()
+        self._thread: threading.Thread | None = None
+
+    def _spin(self):
+        idx = 0
+        while not self._stop_event.is_set():
+            frame = self.FRAMES[idx % len(self.FRAMES)]
+            sys.stderr.write(f"\r  [{frame}] {self.message}")
+            sys.stderr.flush()
+            idx += 1
+            self._stop_event.wait(0.08)
+
+    def __enter__(self):
+        if self.enabled:
+            self._thread = threading.Thread(target=self._spin, daemon=True)
+            self._thread.start()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.enabled and self._thread is not None:
+            self._stop_event.set()
+            self._thread.join()
+            clear_len = len(f"  [ ] {self.message}") + 2
+            sys.stderr.write("\r" + " " * clear_len + "\r")
+            sys.stderr.flush()
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -127,15 +163,13 @@ def main(argv=None):
         print()
 
     # --- Phase 1: Fetch ---
-    if not args.json:
-        print(f"  [*] Fetching target page and scripts...", file=sys.stderr)
-
     try:
-        scripts, source_map_findings = run_fetcher(
-            args.target,
-            include_third_party=args.include_third_party,
-            allowed_domains=args.allow_domain,
-        )
+        with _Spinner("Fetching target page and scripts...", enabled=not args.json):
+            scripts, source_map_findings = run_fetcher(
+                args.target,
+                include_third_party=args.include_third_party,
+                allowed_domains=args.allow_domain,
+            )
     except Exception as e:
         if not args.json:
             print(f"\n  [!] Fatal: Could not fetch target — {e}", file=sys.stderr)
@@ -153,40 +187,38 @@ def main(argv=None):
     all_findings: list[Finding] = list(source_map_findings)
 
     # --- Phase 2: Detection ---
-    if not args.json:
-        print(f"  [*] Running detectors...", file=sys.stderr)
+    with _Spinner("Running detectors...", enabled=not args.json):
+        if run_xss:
+            all_findings.extend(run_xss_detectors(
+                scripts,
+                skip_xss=args.skip_xss if not args.only_xss else False,
+                skip_postmessage=args.skip_postmessage if not args.only_xss else False,
+                skip_redirect=args.skip_redirect if not args.only_xss else False,
+                skip_pollution=args.skip_pollution if not args.only_xss else False,
+                skip_storage=args.skip_storage if not args.only_xss else False,
+            ))
 
-    if run_xss:
-        all_findings.extend(run_xss_detectors(
-            scripts,
-            skip_xss=args.skip_xss if not args.only_xss else False,
-            skip_postmessage=args.skip_postmessage if not args.only_xss else False,
-            skip_redirect=args.skip_redirect if not args.only_xss else False,
-            skip_pollution=args.skip_pollution if not args.only_xss else False,
-            skip_storage=args.skip_storage if not args.only_xss else False,
-        ))
+        if run_secrets:
+            all_findings.extend(run_secret_detectors(
+                scripts,
+                skip_secrets=args.skip_secrets if not args.only_secrets else False,
+                skip_infra=args.skip_infra if not args.only_secrets else False,
+            ))
 
-    if run_secrets:
-        all_findings.extend(run_secret_detectors(
-            scripts,
-            skip_secrets=args.skip_secrets if not args.only_secrets else False,
-            skip_infra=args.skip_infra if not args.only_secrets else False,
-        ))
+        if run_endpoints:
+            all_findings.extend(run_endpoint_detectors(
+                scripts,
+                skip_endpoints=args.skip_endpoints if not args.only_endpoints else False,
+                skip_admin=args.skip_admin if not args.only_endpoints else False,
+                skip_idor=args.skip_idor if not args.only_endpoints else False,
+                skip_client_validation=args.skip_client_validation if not args.only_endpoints else False,
+            ))
 
-    if run_endpoints:
-        all_findings.extend(run_endpoint_detectors(
-            scripts,
-            skip_endpoints=args.skip_endpoints if not args.only_endpoints else False,
-            skip_admin=args.skip_admin if not args.only_endpoints else False,
-            skip_idor=args.skip_idor if not args.only_endpoints else False,
-            skip_client_validation=args.skip_client_validation if not args.only_endpoints else False,
-        ))
-
-    if run_libs:
-        all_findings.extend(run_library_detectors(
-            scripts,
-            skip_libraries=False,
-        ))
+        if run_libs:
+            all_findings.extend(run_library_detectors(
+                scripts,
+                skip_libraries=False,
+            ))
 
     # --- Phase 3: Filter by minimum severity ---
     min_sev_map = {
@@ -211,3 +243,4 @@ def main(argv=None):
 
 if __name__ == "__main__":
     main()
+

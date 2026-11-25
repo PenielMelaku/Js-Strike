@@ -1,6 +1,7 @@
 """Terminal and JSON report output for JS Strike findings."""
 
 import json
+import os
 import sys
 from typing import List, Dict
 from collections import defaultdict
@@ -31,6 +32,15 @@ class Color:
     BG_MAGENTA = "\033[45m"
     BG_BLUE = "\033[44m"
     BG_GRAY = "\033[100m"
+
+
+if not sys.stdout.isatty() or "NO_COLOR" in os.environ:
+    for _attr in (
+        "RESET", "BOLD", "DIM",
+        "RED", "YELLOW", "GREEN", "BLUE", "CYAN", "MAGENTA", "WHITE", "GRAY",
+        "BG_RED", "BG_YELLOW", "BG_MAGENTA", "BG_BLUE", "BG_GRAY",
+    ):
+        setattr(Color, _attr, "")
 
 
 SEVERITY_COLORS = {
@@ -69,8 +79,6 @@ def print_banner():
 
 def print_terminal_report(findings: List[Finding], verbose: bool = False):
     """Print a color-coded terminal report grouped by severity."""
-    print_banner()
-
     if not findings:
         print(f"\n{Color.GREEN}{Color.BOLD}  ✓ No findings detected.{Color.RESET}\n")
         return
@@ -202,3 +210,4 @@ def print_json_report(findings: List[Finding]):
             })
 
     print(json.dumps(report, indent=2))
+
