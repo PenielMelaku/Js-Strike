@@ -3,6 +3,7 @@
 import json
 import os
 import sys
+import time
 from typing import List, Dict
 from collections import defaultdict
 
@@ -97,21 +98,27 @@ def _msf_section(title: str):
     print()
 
 
-def print_banner():
+def print_banner(animate: bool = True):
     """Print an msfconsole-inspired JS Strike banner with stats block."""
-    art = rf"""
-{Color.RED}{Color.BOLD}       ██╗███████╗    ███████╗████████╗██████╗ ██╗██╗  ██╗███████╗{Color.RESET}
-{Color.RED}{Color.BOLD}       ██║██╔════╝    ██╔════╝╚══██╔══╝██╔══██╗██║██║ ██╔╝██╔════╝{Color.RESET}
-{Color.WHITE}{Color.BOLD}       ██║███████╗    ███████╗   ██║   ██████╔╝██║█████╔╝ █████╗  {Color.RESET}
-{Color.CYAN}  ██   ██║╚════██║    ╚════██║   ██║   ██╔══██╗██║██╔═██╗ ██╔══╝  {Color.RESET}
-{Color.CYAN}  ╚█████╔╝███████║    ███████║   ██║   ██║  ██║██║██║  ██╗███████╗{Color.RESET}
-{Color.DIM}   ╚════╝ ╚══════╝    ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚══════╝{Color.RESET}
-"""
-    print(art)
-    print(f"         {Color.DIM}=[ {Color.CYAN}{Color.BOLD}jsstrike v{__version__}{Color.RESET} {Color.DIM}- JavaScript Static Recon Console   ]{Color.RESET}")
-    print(f"  {Color.DIM}+ -- --=[ {Color.WHITE}14 detectors{Color.RESET} {Color.DIM}- {Color.WHITE}4 suites{Color.RESET} {Color.DIM}- {Color.WHITE}passive static analysis{Color.RESET}      {Color.DIM}]{Color.RESET}")
-    print(f"  {Color.DIM}+ -- --=[ {Color.BLUE}{GITHUB_URL}{Color.RESET}                         {Color.DIM}]{Color.RESET}")
-    print()
+    banner_lines = [
+        "",
+        f"{Color.RED}{Color.BOLD}       ██╗███████╗    ███████╗████████╗██████╗ ██╗██╗  ██╗███████╗{Color.RESET}",
+        f"{Color.RED}{Color.BOLD}       ██║██╔════╝    ██╔════╝╚══██╔══╝██╔══██╗██║██║ ██╔╝██╔════╝{Color.RESET}",
+        f"{Color.WHITE}{Color.BOLD}       ██║███████╗    ███████╗   ██║   ██████╔╝██║█████╔╝ █████╗  {Color.RESET}",
+        f"{Color.CYAN}  ██   ██║╚════██║    ╚════██║   ██║   ██╔══██╗██║██╔═██╗ ██╔══╝  {Color.RESET}",
+        f"{Color.CYAN}  ╚█████╔╝███████║    ███████║   ██║   ██║  ██║██║██║  ██╗███████╗{Color.RESET}",
+        f"{Color.DIM}   ╚════╝ ╚══════╝    ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚══════╝{Color.RESET}",
+        "",
+        f"         {Color.DIM}=[ {Color.CYAN}{Color.BOLD}jsstrike v{__version__}{Color.RESET} {Color.DIM}- JavaScript Static Recon Console   ]{Color.RESET}",
+        f"  {Color.DIM}+ -- --=[ {Color.WHITE}14 detectors{Color.RESET} {Color.DIM}- {Color.WHITE}4 suites{Color.RESET} {Color.DIM}- {Color.WHITE}passive static analysis{Color.RESET}      {Color.DIM}]{Color.RESET}",
+        f"  {Color.DIM}+ -- --=[ {Color.BLUE}{GITHUB_URL}{Color.RESET}                         {Color.DIM}]{Color.RESET}",
+        "",
+    ]
+    should_animate = animate and sys.stdout.isatty() and "NO_COLOR" not in os.environ
+    for line in banner_lines:
+        print(line, flush=True)
+        if should_animate and line:
+            time.sleep(0.04)
 
 
 def print_scan_target(target: str, include_third_party: bool = False,

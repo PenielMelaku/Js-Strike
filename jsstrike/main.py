@@ -164,7 +164,10 @@ def main(argv=None):
     run_libs = (args.only_libraries or not only_mode) and not args.skip_libraries
 
     if not args.json:
-        print_banner()
+        with _Spinner("Starting the JS Strike console...", enabled=True):
+            if sys.stderr.isatty():
+                time.sleep(0.28)
+        print_banner(animate=True)
         print_scan_target(
             args.target,
             include_third_party=args.include_third_party,
