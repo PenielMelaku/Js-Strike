@@ -141,7 +141,7 @@ INFRA_PATTERNS = [
      "Internal hostname", Severity.HIGH),
 
     # S3 buckets
-    (r"[a-zA-Z0-9._-]+\.s3\.amazonaws\.com", "S3 Bucket URL", Severity.MEDIUM),
+    (r"\b[a-zA-Z0-9][a-zA-Z0-9._-]{1,62}\.s3\.amazonaws\.com\b", "S3 Bucket URL", Severity.MEDIUM),
     (r"s3://[a-zA-Z0-9._-]+", "S3 Bucket URI", Severity.MEDIUM),
     (r"arn:aws:s3:::[a-zA-Z0-9._-]+", "S3 Bucket ARN", Severity.MEDIUM),
 
