@@ -16,68 +16,68 @@ LIBRARY_SIGNATURES = [
     (r"jQuery\s+(?:JavaScript\s+Library\s+)?v(\d+\.\d+(?:\.\d+)?)", "jQuery"),
     (r'jquery:\s*["\'](\d+\.\d+\.\d+)["\']', "jQuery"),
     (r"jquery\.min\.js\?v=(\d+\.\d+(?:\.\d+)?)", "jQuery"),
-    (r"jquery[^\n]{0,20}v(\d+\.\d+\.\d+)", "jQuery"),
+    (r"jquery[^\n]{0,20}?v(\d+\.\d+\.\d+)", "jQuery"),
 
     # Angular (1.x)
-    (r"angular(?:\.min)?\.js[^\n]{0,30}v?(\d+\.\d+(?:\.\d+)?)", "AngularJS"),
+    (r"angular(?:\.min)?\.js[^\n]{0,30}?v?(\d+\.\d+(?:\.\d+)?)", "AngularJS"),
     (r"angular\s*\.\s*version\s*[:=]\s*\{[^}]*full\s*:\s*['\"](\d+\.\d+(?:\.\d+)?)['\"]", "AngularJS"),
 
     # React
-    (r"react(?:\.production|\.development)?\.min\.js[^\n]{0,20}v?(\d+\.\d+(?:\.\d+)?)", "React"),
+    (r"react(?:\.production|\.development)?\.min\.js[^\n]{0,20}?v?(\d+\.\d+(?:\.\d+)?)", "React"),
     (r"React\.version\s*=\s*['\"](\d+\.\d+(?:\.\d+)?)['\"]", "React"),
 
     # Vue
-    (r"vue(?:\.min|\.runtime)?\.js[^\n]{0,30}v?(\d+\.\d+(?:\.\d+)?)", "Vue.js"),
+    (r"vue(?:\.min|\.runtime)?\.js[^\n]{0,30}?v?(\d+\.\d+(?:\.\d+)?)", "Vue.js"),
     (r"Vue\.version\s*=\s*['\"](\d+\.\d+(?:\.\d+)?)['\"]", "Vue.js"),
 
     # Lodash
-    (r"lodash(?:\.min)?\.js[^\n]{0,20}v?(\d+\.\d+(?:\.\d+)?)", "Lodash"),
+    (r"lodash(?:\.min)?\.js[^\n]{0,20}?v?(\d+\.\d+(?:\.\d+)?)", "Lodash"),
     (r"lodash\s+(\d+\.\d+(?:\.\d+)?)", "Lodash"),
     (r"VERSION\s*=\s*['\"](\d+\.\d+\.\d+)['\"];\s*\n.*lodash", "Lodash"),
 
     # Underscore
-    (r"underscore(?:\.min)?\.js[^\n]{0,20}v?(\d+\.\d+(?:\.\d+)?)", "Underscore.js"),
+    (r"underscore(?:\.min)?\.js[^\n]{0,20}?v?(\d+\.\d+(?:\.\d+)?)", "Underscore.js"),
 
     # Bootstrap
-    (r"bootstrap(?:\.min)?\.js[^\n]{0,30}v?(\d+\.\d+(?:\.\d+)?)", "Bootstrap"),
+    (r"bootstrap(?:\.min)?\.js[^\n]{0,30}?v?(\d+\.\d+(?:\.\d+)?)", "Bootstrap"),
     (r"Bootstrap\s+v(\d+\.\d+(?:\.\d+)?)", "Bootstrap"),
 
     # Moment.js
-    (r"moment(?:\.min)?\.js[^\n]{0,20}v?(\d+\.\d+(?:\.\d+)?)", "Moment.js"),
-    (r"momentjs\.com[^\n]{0,20}(\d+\.\d+(?:\.\d+)?)", "Moment.js"),
+    (r"moment(?:\.min)?\.js[^\n]{0,20}?v?(\d+\.\d+(?:\.\d+)?)", "Moment.js"),
+    (r"momentjs\.com[^\n]{0,20}?(\d+\.\d+(?:\.\d+)?)", "Moment.js"),
 
     # D3
-    (r"d3(?:\.min)?\.js[^\n]{0,20}v?(\d+\.\d+(?:\.\d+)?)", "D3.js"),
+    (r"d3(?:\.min)?\.js[^\n]{0,20}?v?(\d+\.\d+(?:\.\d+)?)", "D3.js"),
 
     # Handlebars
-    (r"handlebars(?:\.min)?\.js[^\n]{0,20}v?(\d+\.\d+(?:\.\d+)?)", "Handlebars.js"),
+    (r"handlebars(?:\.min)?\.js[^\n]{0,20}?v?(\d+\.\d+(?:\.\d+)?)", "Handlebars.js"),
 
     # Backbone
-    (r"backbone(?:\.min)?\.js[^\n]{0,20}v?(\d+\.\d+(?:\.\d+)?)", "Backbone.js"),
+    (r"backbone(?:\.min)?\.js[^\n]{0,20}?v?(\d+\.\d+(?:\.\d+)?)", "Backbone.js"),
 
     # Ember
-    (r"ember(?:\.min)?\.js[^\n]{0,20}v?(\d+\.\d+(?:\.\d+)?)", "Ember.js"),
+    (r"ember(?:\.min)?\.js[^\n]{0,20}?v?(\d+\.\d+(?:\.\d+)?)", "Ember.js"),
 
     # Knockout
-    (r"knockout(?:\.min)?\.js[^\n]{0,20}v?(\d+\.\d+(?:\.\d+)?)", "Knockout.js"),
+    (r"knockout(?:\.min)?\.js[^\n]{0,20}?v?(\d+\.\d+(?:\.\d+)?)", "Knockout.js"),
 
     # Axios
-    (r"axios(?:\.min)?\.js[^\n]{0,20}v?(\d+\.\d+(?:\.\d+)?)", "Axios"),
+    (r"axios(?:\.min)?\.js[^\n]{0,20}?v?(\d+\.\d+(?:\.\d+)?)", "Axios"),
 
     # Socket.io
-    (r"socket\.io(?:\.min)?\.js[^\n]{0,20}v?(\d+\.\d+(?:\.\d+)?)", "Socket.io"),
+    (r"socket\.io(?:\.min)?\.js[^\n]{0,20}?v?(\d+\.\d+(?:\.\d+)?)", "Socket.io"),
 
     # DOMPurify
-    (r"DOMPurify[^\n]{0,20}(\d+\.\d+(?:\.\d+)?)", "DOMPurify"),
+    (r"DOMPurify[^\n]{0,20}?(\d+\.\d+(?:\.\d+)?)", "DOMPurify"),
 
     # CKEditor
-    (r"ckeditor[^\n]{0,20}(\d+\.\d+(?:\.\d+)?)", "CKEditor"),
+    (r"ckeditor[^\n]{0,20}?(\d+\.\d+(?:\.\d+)?)", "CKEditor"),
 
     # TinyMCE
-    (r"tinymce[^\n]{0,20}(\d+\.\d+(?:\.\d+)?)", "TinyMCE"),
+    (r"tinymce[^\n]{0,20}?(\d+\.\d+(?:\.\d+)?)", "TinyMCE"),
 
     # Prototype.js
-    (r"prototype(?:\.min)?\.js[^\n]{0,20}v?(\d+\.\d+(?:\.\d+)?)", "Prototype.js"),
+    (r"prototype(?:\.min)?\.js[^\n]{0,20}?v?(\d+\.\d+(?:\.\d+)?)", "Prototype.js"),
 ]
 
 # ---------------------------------------------------------------------------
