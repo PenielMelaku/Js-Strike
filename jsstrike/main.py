@@ -44,7 +44,7 @@ class _Spinner:
         while not self._stop_event.is_set():
             frame = self.FRAMES[idx % len(self.FRAMES)]
             elapsed = time.monotonic() - self._start
-            sys.stderr.write(f"\r  {Color.CYAN}{frame}{Color.RESET} {self.message} {Color.DIM}({elapsed:.1f}s){Color.RESET}")
+            sys.stderr.write(f"\r  {Color.BLUE}{Color.BOLD}[*]{Color.RESET} {self.message} {Color.CYAN}{frame}{Color.RESET} {Color.DIM}({elapsed:.1f}s){Color.RESET}")
             sys.stderr.flush()
             idx += 1
             self._stop_event.wait(0.08)
@@ -193,8 +193,8 @@ def main(argv=None):
         inline_count = sum(1 for s in scripts if s.is_inline)
         external_count = sum(1 for s in scripts if not s.is_inline)
         print(
-            f"  {Color.GREEN}✔{Color.RESET} Found {Color.BOLD}{len(scripts)}{Color.RESET} script(s) "
-            f"({external_count} external, {inline_count} inline) {Color.DIM}in {fetch_elapsed:.2f}s{Color.RESET}",
+            f"  {Color.GREEN}{Color.BOLD}[+]{Color.RESET} Found {Color.BOLD}{len(scripts)}{Color.RESET} script(s) "
+            f"({external_count} external, {inline_count} inline) {Color.DIM}[{fetch_elapsed:.2f}s]{Color.RESET}",
             file=sys.stderr,
         )
 
@@ -252,8 +252,8 @@ def main(argv=None):
     if not args.json:
         detect_elapsed = time.monotonic() - t_detect
         print(
-            f"  {Color.GREEN}✔{Color.RESET} Analysis complete — {Color.BOLD}{len(all_findings)}{Color.RESET} finding(s) "
-            f"{Color.DIM}in {detect_elapsed:.2f}s{Color.RESET}\n",
+            f"  {Color.GREEN}{Color.BOLD}[+]{Color.RESET} Analysis complete — {Color.BOLD}{len(all_findings)}{Color.RESET} finding(s) "
+            f"{Color.DIM}[{detect_elapsed:.2f}s]{Color.RESET}\n",
             file=sys.stderr,
         )
         print_terminal_report(all_findings, verbose=args.verbose)

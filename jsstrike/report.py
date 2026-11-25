@@ -1,4 +1,4 @@
-"""Terminal and JSON report output for JS Strike findings."""
+"""Terminal and JSON report output for JS Strike findings (msfconsole-inspired UI)."""
 
 import json
 import os
@@ -54,6 +54,14 @@ SEVERITY_COLORS = {
     Severity.INFO:     (Color.GRAY, "   INFO   "),
 }
 
+SEVERITY_PREFIX = {
+    Severity.CRITICAL: f"{Color.RED}{Color.BOLD}[-]{Color.RESET}",
+    Severity.HIGH:     f"{Color.RED}{Color.BOLD}[!]{Color.RESET}",
+    Severity.MEDIUM:   f"{Color.YELLOW}{Color.BOLD}[!]{Color.RESET}",
+    Severity.LOW:      f"{Color.BLUE}{Color.BOLD}[*]{Color.RESET}",
+    Severity.INFO:     f"{Color.GRAY}[*]{Color.RESET}",
+}
+
 SEVERITY_BAR_COLORS = {
     Severity.CRITICAL: Color.RED + Color.BOLD,
     Severity.HIGH:     Color.RED,
@@ -82,51 +90,52 @@ def _truncate(text: str, max_len: int = 100) -> str:
     return text[:max_len - 3] + "..."
 
 
-def _section_header(title: str, width: int = 66) -> str:
-    """Render a clean box-drawn section header."""
-    bar = "─" * max(4, width - len(title) - 5)
-    return (
-        f"  {Color.CYAN}{Color.BOLD}╭─ {Color.WHITE}{title} {Color.CYAN}{bar}╮{Color.RESET}"
-    )
-
-
-def _section_footer(width: int = 66) -> str:
-    bar = "─" * (width - 2)
-    return f"  {Color.CYAN}{Color.BOLD}╰{bar}╯{Color.RESET}"
+def _msf_section(title: str):
+    """Print a Metasploit-style section header with underlined title."""
+    print(f"  {Color.WHITE}{Color.BOLD}{title}{Color.RESET}")
+    print(f"  {Color.CYAN}{'=' * len(title)}{Color.RESET}")
+    print()
 
 
 def print_banner():
-    """Print the JS Strike startup banner with GitHub attribution."""
-    w = 64
-    border = "─" * w
+    """Print an msfconsole-inspired JS Strike banner with stats block."""
+    art = rf"""
+{Color.RED}{Color.BOLD}       ██╗███████╗    ███████╗████████╗██████╗ ██╗██╗  ██╗███████╗{Color.RESET}
+{Color.RED}{Color.BOLD}       ██║██╔════╝    ██╔════╝╚══██╔══╝██╔══██╗██║██║ ██╔╝██╔════╝{Color.RESET}
+{Color.WHITE}{Color.BOLD}       ██║███████╗    ███████╗   ██║   ██████╔╝██║█████╔╝ █████╗  {Color.RESET}
+{Color.CYAN}  ██   ██║╚════██║    ╚════██║   ██║   ██╔══██╗██║██╔═██╗ ██╔══╝  {Color.RESET}
+{Color.CYAN}  ╚█████╔╝███████║    ███████║   ██║   ██║  ██║██║██║  ██╗███████╗{Color.RESET}
+{Color.DIM}   ╚════╝ ╚══════╝    ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚══════╝{Color.RESET}
+"""
+    print(art)
+    print(f"         {Color.DIM}=[ {Color.CYAN}{Color.BOLD}jsstrike v{__version__}{Color.RESET} {Color.DIM}- JavaScript Static Recon Console   ]{Color.RESET}")
+    print(f"  {Color.DIM}+ -- --=[ {Color.WHITE}14 detectors{Color.RESET} {Color.DIM}- {Color.WHITE}4 suites{Color.RESET} {Color.DIM}- {Color.WHITE}passive static analysis{Color.RESET}      {Color.DIM}]{Color.RESET}")
+    print(f"  {Color.DIM}+ -- --=[ {Color.BLUE}{GITHUB_URL}{Color.RESET}                         {Color.DIM}]{Color.RESET}")
     print()
-    print(f"  {Color.CYAN}{Color.BOLD}╭{border}╮{Color.RESET}")
-    print(f"  {Color.CYAN}{Color.BOLD}│{Color.RESET}  {Color.CYAN}{Color.BOLD}     ╦╔═╗  ╔═╗┌┬┐┬─┐┬┬┌─┌─┐{Color.RESET}                                   {Color.CYAN}{Color.BOLD}│{Color.RESET}")
-    print(f"  {Color.CYAN}{Color.BOLD}│{Color.RESET}  {Color.CYAN}{Color.BOLD}     ║╚═╗  ╚═╗ │ ├┬┘│├┴┐├┤ {Color.RESET}   {Color.WHITE}{Color.BOLD}v{__version__}{Color.RESET}                          {Color.CYAN}{Color.BOLD}│{Color.RESET}")
-    print(f"  {Color.CYAN}{Color.BOLD}│{Color.RESET}  {Color.CYAN}{Color.BOLD}    ╚╝╚═╝  ╚═╝ ┴ ┴└─┴┴ ┴└─┘{Color.RESET}                                   {Color.CYAN}{Color.BOLD}│{Color.RESET}")
-    print(f"  {Color.CYAN}{Color.BOLD}│{Color.RESET}  {Color.WHITE}JavaScript Static Analysis & Recon CLI{Color.RESET}                        {Color.CYAN}{Color.BOLD}│{Color.RESET}")
-    print(f"  {Color.CYAN}{Color.BOLD}│{Color.RESET}  {Color.DIM}GitHub:{Color.RESET} {Color.BLUE}{GITHUB_URL}{Color.RESET}                       {Color.CYAN}{Color.BOLD}│{Color.RESET}")
-    print(f"  {Color.CYAN}{Color.BOLD}╰{border}╯{Color.RESET}")
 
 
 def print_scan_target(target: str, include_third_party: bool = False,
                       allow_domain: List[str] | None = None):
-    """Print a compact scan configuration block."""
-    scope = "Same domain + subdomains"
+    """Print an msfconsole-style module options / command prompt block."""
+    scope = "same-domain + subdomains"
     if include_third_party:
-        scope = "All scripts (including third-party)"
+        scope = "all (including third-party)"
     elif allow_domain:
-        scope = f"Same domain + {', '.join(allow_domain)}"
+        scope = f"same-domain + {', '.join(allow_domain)}"
 
-    print(f"  {Color.DIM}Target:{Color.RESET} {Color.WHITE}{Color.BOLD}{target}{Color.RESET}")
-    print(f"  {Color.DIM}Scope:{Color.RESET}  {scope}")
+    print(f"  {Color.BOLD}jsstrike{Color.RESET} {Color.RED}> {Color.WHITE}run -u {target}{Color.RESET}")
+    print()
+    print(f"  {Color.DIM}{'Option':<12} {'Current Setting':<38} {'Description'}{Color.RESET}")
+    print(f"  {Color.CYAN}{'------':<12} {'---------------':<38} {'-----------'}{Color.RESET}")
+    print(f"  {'RURL':<12} {Color.WHITE}{_truncate(target, 36):<38}{Color.RESET} {Color.DIM}Target URL to analyze{Color.RESET}")
+    print(f"  {'SCOPE':<12} {Color.WHITE}{_truncate(scope, 36):<38}{Color.RESET} {Color.DIM}Script domain inclusion policy{Color.RESET}")
     print()
 
 
 def print_terminal_report(findings: List[Finding], verbose: bool = False):
-    """Print a color-coded terminal report grouped by severity."""
+    """Print an msfconsole-style terminal report grouped by severity."""
     if not findings:
-        print(f"\n  {Color.GREEN}{Color.BOLD}✔ No findings detected.{Color.RESET}\n")
+        print(f"  {Color.GREEN}{Color.BOLD}[+]{Color.RESET} No findings detected.\n")
         _print_footer()
         return
 
@@ -139,9 +148,10 @@ def print_terminal_report(findings: List[Finding], verbose: bool = False):
     unique_files = len({f.file_url for f in findings})
     bar_width = 24
 
-    # Summary dashboard
-    print(_section_header("SCAN RESULTS SUMMARY"))
-    print(f"  {Color.CYAN}│{Color.RESET}")
+    # Summary table
+    _msf_section("Scan Results Summary")
+    print(f"  {Color.DIM}{'Severity':<12} {'Distribution':<26} {'Count':>5}  {'Share'}{Color.RESET}")
+    print(f"  {Color.CYAN}{'--------':<12} {'------------':<26} {'-----':>5}  {'-----'}{Color.RESET}")
 
     for sev in SEVERITY_ORDER:
         count = len(by_severity.get(sev, []))
@@ -153,19 +163,16 @@ def print_terminal_report(findings: List[Finding], verbose: bool = False):
         bar_color = SEVERITY_BAR_COLORS[sev]
         bar = f"{bar_color}{'█' * filled}{Color.GRAY}{'░' * empty}{Color.RESET}"
         badge = _severity_badge(sev)
-        print(f"  {Color.CYAN}│{Color.RESET}  {badge}  {bar}  {Color.BOLD}{count:>4}{Color.RESET} {Color.DIM}({pct:5.1f}%){Color.RESET}")
+        print(f"  {badge}  {bar}  {Color.BOLD}{count:>5}{Color.RESET}  {Color.DIM}{pct:5.1f}%{Color.RESET}")
 
-    print(f"  {Color.CYAN}│{Color.RESET}")
-    print(
-        f"  {Color.CYAN}│{Color.RESET}  {Color.BOLD}Total:{Color.RESET} {Color.WHITE}{Color.BOLD}{total}{Color.RESET} finding{'s' if total != 1 else ''}"
-        f"  {Color.DIM}•{Color.RESET}  {Color.BOLD}Scripts:{Color.RESET} {unique_files}"
-    )
-    print(_section_footer())
     print()
+    print(
+        f"  {Color.BLUE}{Color.BOLD}[*]{Color.RESET} Total: {Color.WHITE}{Color.BOLD}{total}{Color.RESET} finding{'s' if total != 1 else ''}"
+        f" across {Color.WHITE}{Color.BOLD}{unique_files}{Color.RESET} script(s)\n"
+    )
 
     # Detailed findings
-    print(_section_header("DETAILED FINDINGS"))
-    print()
+    _msf_section("Detailed Findings")
 
     idx = 0
     for sev in SEVERITY_ORDER:
@@ -175,19 +182,19 @@ def print_terminal_report(findings: List[Finding], verbose: bool = False):
 
         for f in sev_findings:
             idx += 1
+            prefix = SEVERITY_PREFIX[sev]
             badge = _severity_badge(sev)
             show_snippet = verbose or sev in (Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM)
 
-            print(f"  {Color.BOLD}{Color.WHITE}#{idx:<3}{Color.RESET} {badge}  {Color.BOLD}{f.category.value}{Color.RESET}")
-            print(f"   {Color.DIM}├─ Location{Color.RESET}   {Color.CYAN}{f.file_url}:{f.line_number}{Color.RESET}")
+            print(f"  {prefix} {Color.BOLD}#{idx:<3}{Color.RESET} {badge} {Color.WHITE}{Color.BOLD}{f.category.value}{Color.RESET}")
+            print(f"      {Color.DIM}Location :{Color.RESET} {Color.CYAN}{f.file_url}:{f.line_number}{Color.RESET}")
             print(
-                f"   {Color.DIM}├─ Meta{Color.RESET}       confidence: {Color.WHITE}{f.confidence.value}{Color.RESET}"
-                f"  {Color.DIM}•{Color.RESET}  detector: {Color.WHITE}{f.detector}{Color.RESET}"
+                f"      {Color.DIM}Module   :{Color.RESET} {f.detector}"
+                f"  {Color.DIM}|{Color.RESET}  {Color.DIM}Confidence:{Color.RESET} {f.confidence.value}"
             )
-            detail_branch = "├─" if show_snippet else "╰─"
-            print(f"   {Color.DIM}{detail_branch} Detail{Color.RESET}     {f.explanation}")
+            print(f"      {Color.DIM}Detail   :{Color.RESET} {f.explanation}")
             if show_snippet:
-                print(f"   {Color.DIM}╰─ Snippet{Color.RESET}    {Color.GRAY}{_truncate(f.snippet, 115)}{Color.RESET}")
+                print(f"      {Color.DIM}Snippet  :{Color.RESET} {Color.GRAY}{_truncate(f.snippet, 110)}{Color.RESET}")
             print()
 
     # Endpoint summary
@@ -201,7 +208,7 @@ def print_terminal_report(findings: List[Finding], verbose: bool = False):
 
 
 def _print_endpoint_summary(findings: List[Finding]):
-    """Print a quick-reference list of extracted endpoints."""
+    """Print an msfconsole-style table of extracted endpoints."""
     endpoints = [
         f for f in findings
         if f.category in (Category.ENDPOINT, Category.ADMIN_ROUTE, Category.IDOR_CANDIDATE)
@@ -209,8 +216,9 @@ def _print_endpoint_summary(findings: List[Finding]):
     if not endpoints:
         return
 
-    print(_section_header(f"EXTRACTED ENDPOINTS ({len(endpoints)})"))
-    print()
+    _msf_section(f"Extracted Endpoints ({len(endpoints)})")
+    print(f"  {Color.DIM}{'Tag':<9} {'Endpoint':<54} {'Source'}{Color.RESET}")
+    print(f"  {Color.CYAN}{'---':<9} {'--------':<54} {'------'}{Color.RESET}")
 
     for f in endpoints:
         if f.category == Category.ADMIN_ROUTE:
@@ -224,12 +232,13 @@ def _print_endpoint_summary(findings: List[Finding]):
             path_color = Color.WHITE
 
         path = f.explanation.split(": ", 1)[-1] if ": " in f.explanation else f.snippet
-        print(f"    {tag} {path_color}{_truncate(path, 88)}{Color.RESET}  {Color.DIM}({f.file_url}:{f.line_number}){Color.RESET}")
+        padded_path = f"{_truncate(path, 52):<54}"
+        print(f"  {tag}   {path_color}{padded_path}{Color.RESET} {Color.DIM}{f.file_url}:{f.line_number}{Color.RESET}")
     print()
 
 
 def _print_secret_summary(findings: List[Finding]):
-    """Print a quick-reference list of detected secrets."""
+    """Print an msfconsole-style table of detected secrets & infra leaks."""
     secrets = [
         f for f in findings
         if f.category in (Category.SECRET_EXPOSURE, Category.INTERNAL_INFRA)
@@ -237,8 +246,9 @@ def _print_secret_summary(findings: List[Finding]):
     if not secrets:
         return
 
-    print(_section_header(f"DETECTED SECRETS & INFRA LEAKS ({len(secrets)})"))
-    print()
+    _msf_section(f"Detected Secrets & Infra Leaks ({len(secrets)})")
+    print(f"  {Color.DIM}{'Sev':<8} {'Finding':<54} {'Source'}{Color.RESET}")
+    print(f"  {Color.CYAN}{'---':<8} {'-------':<54} {'------'}{Color.RESET}")
 
     for f in secrets:
         if f.severity == Severity.CRITICAL:
@@ -254,12 +264,13 @@ def _print_secret_summary(findings: List[Finding]):
             tag = f"{Color.BLUE}[LOW ]{Color.RESET}"
             text_color = Color.GRAY
 
-        print(f"    {tag} {text_color}{_truncate(f.explanation, 88)}{Color.RESET}  {Color.DIM}({f.file_url}:{f.line_number}){Color.RESET}")
+        padded_detail = f"{_truncate(f.explanation, 52):<54}"
+        print(f"  {tag}   {text_color}{padded_detail}{Color.RESET} {Color.DIM}{f.file_url}:{f.line_number}{Color.RESET}")
     print()
 
 
 def _print_footer():
-    print(f"  {Color.DIM}JS Strike v{__version__}  •  {GITHUB_URL}  •  Authorized security testing only{Color.RESET}\n")
+    print(f"  {Color.DIM}jsstrike v{__version__}  |  {GITHUB_URL}  |  Authorized testing only{Color.RESET}\n")
 
 
 def print_json_report(findings: List[Finding]):
