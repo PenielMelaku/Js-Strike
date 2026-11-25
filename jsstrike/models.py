@@ -88,3 +88,4 @@ class ScriptInfo:
         if self.is_inline:
             return f"inline-script-{self.inline_index}"
         return self.url
+

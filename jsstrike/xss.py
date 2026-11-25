@@ -346,3 +346,4 @@ def run_xss_detectors(scripts: List[ScriptInfo],
         if not skip_storage:
             findings.extend(detect_storage_sensitive(script))
     return findings
+

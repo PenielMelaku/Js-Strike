@@ -81,3 +81,4 @@ var ApiClient = {
 var webhookUrl = "https://api.internal.megacorp.com/webhooks/notify";
 var healthCheck = "/api/health";
 var managementConsole = "/admin/console/manage";
+

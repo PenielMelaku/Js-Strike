@@ -58,3 +58,4 @@ function unsafeSet(obj, key, value) {
 function mergeDefaults(config) {
     return Object.assign({}, defaults, config);
 }
+

@@ -7,3 +7,4 @@
     moment.version = "2.10.0";
     window.moment = moment;
 })();
+

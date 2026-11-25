@@ -19,3 +19,4 @@
     jQuery.fn.prepend = function(val) { /* stub */ };
     window.jQuery = window.$ = jQuery;
 });
+

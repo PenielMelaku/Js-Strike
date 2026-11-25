@@ -197,3 +197,4 @@ def run_fetcher(target_url: str, include_third_party: bool = False,
     scripts = [s for s in scripts if s.content]
 
     return scripts, findings
+
