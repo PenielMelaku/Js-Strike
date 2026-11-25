@@ -1,0 +1,15 @@
+{
+  "version": 3,
+  "file": "bundle.js",
+  "sources": [
+    "src/index.ts",
+    "src/components/App.tsx",
+    "src/utils/auth.ts",
+    "src/api/client.ts",
+    "src/config/secrets.ts",
+    "src/services/payment.ts"
+  ],
+  "sourcesContent": [null, null, null, null, null, null],
+  "names": ["app", "init"],
+  "mappings": "AAAA"
+}

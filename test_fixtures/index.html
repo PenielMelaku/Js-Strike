@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JS Strike Test Fixture — Vulnerable Demo App</title>
+    <!-- jQuery 2.2.4 (known CVE) -->
+    <script src="/scripts/jquery-2.2.4.js"></script>
+    <!-- Main app JS with planted DOM XSS, postMessage, redirects -->
+    <script src="/scripts/app.js"></script>
+    <!-- Secrets planted in a config file -->
+    <script src="/scripts/config.js"></script>
+    <!-- API endpoints and admin routes -->
+    <script src="/scripts/api-client.js"></script>
+    <!-- Library with prototype pollution -->
+    <script src="/scripts/utils.js"></script>
+    <!-- Source map reference -->
+    <script src="/scripts/bundle.js"></script>
+    <!-- Outdated library for EOL test -->
+    <script src="/scripts/moment-legacy.js"></script>
+</head>
+<body>
+    <h1>Test Fixture Page</h1>
+    <div id="content"></div>
+    <div id="output"></div>
+
+    <!-- Inline script with storage and XSS -->
+    <script>
+        // Inline: DOM XSS — location.hash into innerHTML
+        var userInput = location.hash.substring(1);
+        document.getElementById("content").innerHTML = userInput;
+
+        // Inline: sensitive data in localStorage
+        localStorage.setItem("auth_token", "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoiYWRtaW4ifQ.fakesig123");
+        sessionStorage.setItem("session_jwt", getSessionToken());
+
+        // Inline: client-side role check
+        if (currentUser.role === "admin") {
+            showAdminPanel();
+        }
+    </script>
+</body>
+</html>
